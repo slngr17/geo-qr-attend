@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { useSession } from '@clerk/clerk-react';
 
-// Client-side Supabase client with Clerk token
 export function createSupabaseClient() {
   const { session } = useSession();
 
   return createClient(
-    import.meta.env.VITE_SUPABASE_URL as string,
-    import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+    import.meta.env.VITE_SUPABASE_URL!,
+    import.meta.env.VITE_SUPABASE_ANON_KEY!,
     {
       global: {
         accessToken: async () => {
@@ -18,5 +17,5 @@ export function createSupabaseClient() {
   );
 }
 
-// Export a default instance (for files that expect the old `supabase`)
+// Default export for backward compatibility with other files
 export const supabase = createSupabaseClient();
