@@ -1,18 +1,34 @@
 import { createClient } from '@supabase/supabase-js';
+import { auth } from '@clerk/nextjs/server';
 
-const supabaseUrl = 'https://nqpjcxhfbgiyyluixkpg.supabase.co';
+// Server-side Supabase client (recommended)
+export async function createServerSupabaseClient() {
+  const { getToken } = auth();
 
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xcGpjeGhmYmdpeXlsdWl4a3BnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMzczNDQsImV4cCI6MjA5MzkxMzM0NH0.Q34IC8ONqan8qQgjktFIR3XCWj1Y2FEbsJ9ZD_Z5tt4';
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        accessToken: async () => getToken(),
+      },
+    }
+  );
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Client-side Supabase client
+import { useSession } from '@clerk/nextjs';
 
-// Mock storage for demo if Supabase isn't configured
-const mockDB: Record<string, any[]> = {
-  profiles: [],
-  classes: [],
-  geofences: [],
-  sessions: [],
-  attendance: []
-};
+export function createClientSupabaseClient() {
+  const { session } = useSession();
 
-export const getMockDB = () => mockDB;
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        accessToken: async () => session?.getToken() ?? null,
+      },
+    }
+  );
+}
