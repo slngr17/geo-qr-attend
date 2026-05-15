@@ -1,34 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
-import { auth } from '@clerk/nextjs/server';
+import { useSession } from '@clerk/clerk-react';
 
-// Server-side Supabase client (recommended)
-export async function createServerSupabaseClient() {
-  const { getToken } = auth();
-
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: {
-        accessToken: async () => getToken(),
-      },
-    }
-  );
-}
-
-// Client-side Supabase client
-import { useSession } from '@clerk/nextjs';
-
-export function createClientSupabaseClient() {
+// Client-side Supabase client with Clerk token
+export function createSupabaseClient() {
   const { session } = useSession();
 
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    import.meta.env.VITE_SUPABASE_URL as string,
+    import.meta.env.VITE_SUPABASE_ANON_KEY as string,
     {
       global: {
-        accessToken: async () => session?.getToken() ?? null,
+        accessToken: async () => {
+          return session?.getToken() ?? null;
+        },
       },
     }
   );
 }
+
+// Export a default instance (for files that expect the old `supabase`)
+export const supabase = createSupabaseClient();
