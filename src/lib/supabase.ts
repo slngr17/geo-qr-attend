@@ -1,18 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
+import { useSession } from '@clerk/clerk-react';
 
-const supabaseUrl = 'https://nqpjcxhfbgiyyluixkpg.supabase.co';
+export function createSupabaseClient() {
+  const { session } = useSession();
 
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xcGpjeGhmYmdpeXlsdWl4a3BnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMzczNDQsImV4cCI6MjA5MzkxMzM0NH0.Q34IC8ONqan8qQgjktFIR3XCWj1Y2FEbsJ9ZD_Z5tt4';
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL!,
+    import.meta.env.VITE_SUPABASE_ANON_KEY!,
+    {
+      accessToken: async () => {
+        return session?.getToken() ?? null;
+      },
+    }
+  );
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Mock storage for demo if Supabase isn't configured
-const mockDB: Record<string, any[]> = {
-  profiles: [],
-  classes: [],
-  geofences: [],
-  sessions: [],
-  attendance: []
-};
-
-export const getMockDB = () => mockDB;
+// Default export for compatibility
+export const supabase = createSupabaseClient();
