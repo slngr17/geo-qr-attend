@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BrowserRouter as Router, 
-  Routes, 
-  Route, 
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
   Navigate,
-  useNavigate
 } from 'react-router-dom';
-import { 
-  ClerkProvider, 
-  SignedIn, 
-  SignedOut, 
-  UserButton, 
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  UserButton,
   useUser,
-  useAuth,
   SignIn,
   SignUp
 } from '@clerk/clerk-react';
@@ -21,20 +19,17 @@ import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import ClassDetail from './pages/ClassDetail';
 import AttendanceScan from './pages/AttendanceScan';
+import Onboarding from './components/Onboarding';
+import SignInCallback from './pages/SignInCallback';
 import { supabase } from './lib/supabase';
 import { Profile, UserRole } from './types';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
-// Access Clerk publishable key from environment variables
-// Supports both standard Vite (VITE_) and common Next.js/Generic (NEXT_PUBLIC_) prefixes
-const CLERK_PUBLISHABLE_KEY = 
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 
+// Access Clerk publishable key
+const CLERK_PUBLISHABLE_KEY =
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
   import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-/**
- * Component to show when the Clerk publishable key is missing or invalid.
- * This prevents the application from crashing and provides clear instructions.
- */
 function MissingClerkKey() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 text-center">
@@ -43,22 +38,9 @@ function MissingClerkKey() {
       </div>
       <h1 className="mb-2 text-2xl font-bold text-slate-900">Clerk Publishable Key Missing</h1>
       <p className="mb-8 max-w-md text-slate-600">
-        To use authentication, you must provide a valid Clerk publishable key. 
+        To use authentication, you must provide a valid Clerk publishable key.
         Please add <strong>VITE_CLERK_PUBLISHABLE_KEY</strong> to your environment variables.
       </p>
-      <div className="w-full max-w-sm overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-sm">
-        <div className="bg-slate-50 px-4 py-2 border-b border-slate-200">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Example .env file</span>
-        </div>
-        <div className="p-4 text-left">
-          <code className="text-sm text-pink-600 break-all block mb-2">
-            VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
-          </code>
-          <p className="text-xs text-slate-400">
-            You can find this in your Clerk Dashboard under "API Keys".
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -77,9 +59,7 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode, role?: 
             .select('*')
             .eq('clerk_id', user.id)
             .single();
-
           if (error || !data) {
-            // Profile might not exist yet if they haven't finished onboarding
             setLoading(false);
             return;
           }
@@ -116,7 +96,6 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode, role?: 
 }
 
 function App() {
-  // If the key is missing or is the placeholder, show the error screen
   if (!CLERK_PUBLISHABLE_KEY || CLERK_PUBLISHABLE_KEY === 'pk_test_placeholder') {
     return <MissingClerkKey />;
   }
@@ -127,34 +106,53 @@ function App() {
         <div className="min-h-screen bg-background text-foreground">
           <Routes>
             <Route path="/" element={<Landing />} />
+
+            {/* Clerk Authentication Routes */}
             <Route path="/sign-in/*" element={
               <div className="flex min-h-screen items-center justify-center p-4">
                 <SignIn routing="path" path="/sign-in" />
               </div>
             } />
+
             <Route path="/sign-up/*" element={
               <div className="flex min-h-screen items-center justify-center p-4">
                 <SignUp routing="path" path="/sign-up" />
               </div>
             } />
+
+            {/* IMPORTANT: Clerk SSO Callback */}
+            <Route path="/sign-in/sso-callback" element={<SignInCallback />} />
+
+            {/* Onboarding */}
+            <Route path="/onboarding" element={
+              <ProtectedRoute>
+                <Onboarding onComplete={() => window.location.href = '/dashboard'} />
+              </ProtectedRoute>
+            } />
+
+            {/* Protected Routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             } />
+
             <Route path="/class/:classId" element={
               <ProtectedRoute>
                 <ClassDetail />
               </ProtectedRoute>
             } />
+
             <Route path="/scan/:sessionId" element={
               <ProtectedRoute role="student">
                 <AttendanceScan />
               </ProtectedRoute>
             } />
-            {/* Catch-all redirect to landing */}
+
+            {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+
           <Toaster position="top-center" richColors />
         </div>
       </Router>
