@@ -108,18 +108,30 @@ function App() {
             <Route path="/" element={<Landing />} />
 
             {/* Clerk Authentication Routes */}
-            <Route path="/sign-in/*" element={
-              <div className="flex min-h-screen items-center justify-center p-4">
-                <SignIn routing="path" path="/sign-in" />
-              </div>
-            } />
+<Route path="/sign-in/*" element={
+  <div className="flex min-h-screen items-center justify-center p-4">
+    <SignIn 
+      routing="path" 
+      path="/sign-in" 
+      afterSignInUrl="/onboarding"
+      afterSignUpUrl="/onboarding"
+    />
+  </div>
+} />
 
-            <Route path="/sign-up/*" element={
-              <div className="flex min-h-screen items-center justify-center p-4">
-                <SignUp routing="path" path="/sign-up" />
-              </div>
-            } />
+<Route path="/sign-up/*" element={
+  <div className="flex min-h-screen items-center justify-center p-4">
+    <SignUp 
+      routing="path" 
+      path="/sign-up" 
+      afterSignInUrl="/onboarding"
+      afterSignUpUrl="/onboarding"
+    />
+  </div>
+} />
 
+{/* Callback Route - Keep this as backup */}
+<Route path="/sign-in/sso-callback" element={<SignInCallback />} />
             {/* IMPORTANT: Clerk SSO Callback */}
             <Route path="/sign-in/sso-callback" element={<SignInCallback />} />
 
