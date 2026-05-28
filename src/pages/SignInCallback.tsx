@@ -24,7 +24,7 @@ const SignInCallback = () => {
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="text-center">
         <p className="text-lg">Completing sign in...</p>
-        <p className="text-sm text-gray-500 mt-2">Please wait</p>
+        <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
       </div>
     </div>
   );
