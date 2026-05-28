@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useClerk, useUser } from '@clerk/clerk-react';
+import { useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 
 const SignInCallback = () => {
@@ -9,8 +9,8 @@ const SignInCallback = () => {
   useEffect(() => {
     const completeSignIn = async () => {
       try {
-        await handleRedirectCallback();
-        // After successful callback, go to onboarding
+        // Simplified call - passing empty object as params
+        await handleRedirectCallback({});
         navigate('/onboarding', { replace: true });
       } catch (error) {
         console.error('Callback error:', error);
