@@ -108,32 +108,31 @@ function App() {
             <Route path="/" element={<Landing />} />
 
             {/* Clerk Authentication Routes */}
-<Route path="/sign-in/*" element={
-  <div className="flex min-h-screen items-center justify-center p-4">
-    <SignIn 
-      routing="path" 
-      path="/sign-in" 
-      afterSignInUrl="/onboarding"
-      afterSignUpUrl="/onboarding"
-    />
-  </div>
-} />
+            <Route path="/sign-in/*" element={
+              <div className="flex min-h-screen items-center justify-center p-4">
+                <SignIn
+                  routing="path"
+                  path="/sign-in"
+                  afterSignInUrl="/onboarding"
+                  afterSignUpUrl="/onboarding"
+                />
+              </div>
+            } />
 
-<Route path="/sign-up/*" element={
-  <div className="flex min-h-screen items-center justify-center p-4">
-    <SignUp 
-      routing="path" 
-      path="/sign-up" 
-      afterSignInUrl="/onboarding"
-      afterSignUpUrl="/onboarding"
-    />
-  </div>
-} />
+            <Route path="/sign-up/*" element={
+              <div className="flex min-h-screen items-center justify-center p-4">
+                <SignUp
+                  routing="path"
+                  path="/sign-up"
+                  afterSignInUrl="/onboarding"
+                  afterSignUpUrl="/onboarding"
+                />
+              </div>
+            } />
 
-{/* Callback Route - Keep this as backup */}
-<Route path="/sign-in/sso-callback" element={<SignInCallback />} />
-            {/* IMPORTANT: Clerk SSO Callback */}
+            {/* Clerk SSO Callback - needed for BOTH sign-in and sign-up routing="path" flows */}
             <Route path="/sign-in/sso-callback" element={<SignInCallback />} />
+            <Route path="/sign-up/sso-callback" element={<SignInCallback />} />
 
             {/* Onboarding */}
             <Route path="/onboarding" element={
