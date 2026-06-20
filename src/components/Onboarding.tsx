@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useSession } from '@clerk/clerk-react';
 import { createAuthenticatedSupabaseClient } from '../lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -14,6 +14,7 @@ interface OnboardingProps {
 
 const Onboarding = ({ onComplete }: OnboardingProps) => {
   const { user } = useUser();
+  const { session } = useSession();
   const [step, setStep] = useState<'role' | 'details'>('role');
   
   const [role, setRole] = useState<'instructor' | 'student' | null>(null);
@@ -48,7 +49,9 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
     setLoading(true);
 
     try {
-      const supabase = createAuthenticatedSupabaseClient();
+      const supabase = createAuthenticatedSupabaseClient(
+        async () => (await session?.getToken()) ?? null
+      );
 
       const { data, error } = await supabase
         .from('profiles')
