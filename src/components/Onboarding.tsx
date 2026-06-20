@@ -56,14 +56,14 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
       const { data, error } = await supabase
         .from('profiles')
         .upsert({
-          clerk_user_id: user.id,
+          clerk_id: user.id,
           full_name: fullName,
           role: role,
           matric_number: role === 'student' ? matricNumber : null,
           school_email: role === 'instructor' ? schoolEmail : null,
           avatar_url: user.imageUrl,
         }, { 
-          onConflict: 'clerk_user_id' 
+          onConflict: 'clerk_id' 
         })
         .select()
         .single();
