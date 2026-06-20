@@ -1,8 +1,13 @@
 // src/lib/profile.ts
 import { createAuthenticatedSupabaseClient } from './supabaseClient';
 
-export async function createOrUpdateProfile(clerkUserId: string, role: 'instructor' | 'student', fullName?: string) {
-  const supabase = createAuthenticatedSupabaseClient();
+export async function createOrUpdateProfile(
+  clerkUserId: string,
+  role: 'instructor' | 'student',
+  fullName: string | undefined,
+  getToken: () => Promise<string | null>
+) {
+  const supabase = createAuthenticatedSupabaseClient(getToken);
 
   const { error } = await supabase
     .from('profiles')
