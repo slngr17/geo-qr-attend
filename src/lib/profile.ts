@@ -12,11 +12,11 @@ export async function createOrUpdateProfile(
   const { error } = await supabase
     .from('profiles')
     .upsert({
-      clerk_user_id: clerkUserId,
+      clerk_id: clerkUserId,
       role: role,
       full_name: fullName || '',
     }, {
-      onConflict: 'clerk_user_id'
+      onConflict: 'clerk_id'
     });
 
   if (error) console.error("Profile creation error:", error);
