@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserButton } from '@clerk/clerk-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface StudentDashboardProps {
   profile: Profile;
@@ -76,7 +77,10 @@ const StudentDashboard = ({ profile }: StudentDashboardProps) => {
           </div>
           <span className="font-bold">AttendX</span>
         </div>
-        <UserButton />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <UserButton />
+        </div>
       </header>
 
       <main className="flex-1 p-4 md:p-8 space-y-6">
