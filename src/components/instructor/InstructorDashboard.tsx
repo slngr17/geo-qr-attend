@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserButton } from '@clerk/clerk-react';
 import CreateClassModal from './CreateClassModal';
 import { toast } from 'sonner';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface InstructorDashboardProps {
   profile: Profile;
@@ -85,9 +86,12 @@ const InstructorDashboard = ({ profile }: InstructorDashboardProps) => {
               <h1 className="text-3xl font-bold">Instructor Dashboard</h1>
               <p className="text-muted-foreground">Welcome back, {profile.full_name.split(' ')[0]}</p>
             </div>
-            <Button onClick={() => setIsModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Create Class
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button onClick={() => setIsModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Create Class
+              </Button>
+            </div>
           </header>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
