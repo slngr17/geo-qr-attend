@@ -14,6 +14,7 @@ import {
   SignIn,
   SignUp
 } from '@clerk/clerk-react';
+import { ThemeProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
@@ -101,6 +102,7 @@ function App() {
   }
 
   return (
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
       <Router>
         <div className="min-h-screen bg-background text-foreground">
@@ -168,6 +170,7 @@ function App() {
         </div>
       </Router>
     </ClerkProvider>
+    </ThemeProvider>
   );
 }
 
