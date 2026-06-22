@@ -10,6 +10,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const Landing = () => {
             <span className="text-xl font-bold tracking-tight">AttendX</span>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <Button variant="ghost" onClick={() => navigate('/sign-in')}>Login</Button>
             <Button onClick={() => navigate('/sign-up')}>Get Started</Button>
           </div>
