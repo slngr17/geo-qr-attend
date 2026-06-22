@@ -32,7 +32,7 @@ const CreateClassModal = ({ isOpen, onClose, onCreated, instructorId }: CreateCl
           name,
           code: code.toUpperCase(),
           description,
-          instructor_id: instructorId
+          clerk_user_id: instructorId
         });
 
       if (error) throw error;
