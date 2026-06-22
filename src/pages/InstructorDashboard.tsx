@@ -1,191 +1,182 @@
-import React, { useState } from 'react';
-import { 
-  Users, 
-  Calendar, 
-  CheckCircle2, 
-  Plus, 
-  MoreVertical,
-  QrCode,
-  MapPin,
-  TrendingUp,
-  Clock
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Profile, Class } from '../../types';
+import { supabase } from '../../lib/supabase';
 import { Button } from '@/components/ui/button';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer
-} from 'recharts';
-import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Plus, BookOpen, Users, Settings, LogOut, LayoutDashboard, Calendar, FileText, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { UserButton } from '@clerk/clerk-react';
+import CreateClassModal from './CreateClassModal';
+import { toast } from 'sonner';
+import ThemeToggle from '@/components/ThemeToggle';
 
-const mockClasses = [
-  { id: '1', name: 'Intro to Computer Science', code: 'CS101', students: 45, attendance: 92 },
-  { id: '2', name: 'Advanced Web Development', code: 'CS302', students: 28, attendance: 88 },
-  { id: '3', name: 'Software Engineering', code: 'CS405', students: 32, attendance: 95 },
-];
+interface InstructorDashboardProps {
+  profile: Profile;
+}
 
-const attendanceData = [
-  { name: 'Mon', attendance: 85 },
-  { name: 'Tue', attendance: 92 },
-  { name: 'Wed', attendance: 88 },
-  { name: 'Thu', attendance: 94 },
-  { name: 'Fri', attendance: 90 },
-];
-
-export function InstructorDashboard() {
+const InstructorDashboard = ({ profile }: InstructorDashboardProps) => {
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .eq('instructor_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClasses(data || []);
+    } catch (err: any) {
+      toast.error('Failed to load classes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { title: 'Total Students', value: '105', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { title: 'Active Classes', value: '3', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-50' },
-          { title: 'Avg. Attendance', value: '91.6%', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-          { title: 'Pending Reports', value: '2', icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50' },
-        ].map((stat, i) => (
-          <Card key={i}>
-            <CardContent className="p-6 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-              </div>
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.bg} ${stat.color}`}>
-                <stat.icon className="w-6 h-6" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Classes Table */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>My Classes</CardTitle>
-              <CardDescription>Management and quick actions for your current courses</CardDescription>
-            </div>
-            <Button size="sm" className="gap-2">
-              <Plus className="w-4 h-4" /> New Class
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Class Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Students</TableHead>
-                  <TableHead>Attendance</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockClasses.map((cls) => (
-                  <TableRow key={cls.id}>
-                    <TableCell className="font-medium">{cls.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{cls.code}</Badge>
-                    </TableCell>
-                    <TableCell>{cls.students}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-green-500" 
-                            style={{ width: `${cls.attendance}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium">{cls.attendance}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="View Geofence">
-                          <MapPin className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" title="Manage Session" onClick={() => navigate(`/instructor/session/${cls.id}`)}>
-                          <QrCode className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Attendance Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly Activity</CardTitle>
-            <CardDescription>Average attendance across all classes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={attendanceData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis hide />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar dataKey="attendance" fill="oklch(0.205 0 0)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Attendance Logs</CardTitle>
-          <CardDescription>Live updates from your current active sessions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">Student {i + 1}</p>
-                    <p className="text-xs text-muted-foreground">Marked present for CS101 • {i * 5 + 2} mins ago</p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-none">
-                  Verified
-                </Badge>
-              </div>
-            ))}
+    <div className="flex h-screen bg-muted/20 overflow-hidden">
+      {/* Sidebar */}
+      <aside className="hidden md:flex w-64 flex-col border-r bg-card">
+        <div className="p-6 border-b flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
+            <LayoutDashboard size={18} />
           </div>
-        </CardContent>
-      </Card>
+          <span className="font-bold text-xl">AttendX</span>
+        </div>
+        <nav className="flex-1 p-4 space-y-2">
+          <Button variant="ghost" className="w-full justify-start text-primary bg-primary/5">
+            <LayoutDashboard className="mr-3 h-5 w-5" /> Dashboard
+          </Button>
+          <Button variant="ghost" className="w-full justify-start">
+            <BookOpen className="mr-3 h-5 w-5" /> My Classes
+          </Button>
+          <Button variant="ghost" className="w-full justify-start">
+            <Calendar className="mr-3 h-5 w-5" /> Schedule
+          </Button>
+          <Button variant="ghost" className="w-full justify-start">
+            <FileText className="mr-3 h-5 w-5" /> Reports
+          </Button>
+        </nav>
+        <div className="p-4 border-t">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <UserButton />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium leading-none">{profile.full_name}</span>
+                <span className="text-xs text-muted-foreground capitalize">{profile.role}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="mx-auto max-w-5xl space-y-8">
+          <header className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Instructor Dashboard</h1>
+              <p className="text-muted-foreground">Welcome back, {profile.full_name.split(' ')[0]}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button onClick={() => setIsModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Create Class
+              </Button>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+             <Card className="bg-primary text-primary-foreground">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">4</div>
+                  <p className="text-xs opacity-70">+2 from yesterday</p>
+                </CardContent>
+             </Card>
+             <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">128</div>
+                  <p className="text-xs text-muted-foreground">Across 5 classes</p>
+                </CardContent>
+             </Card>
+             <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Avg. Attendance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">87%</div>
+                  <p className="text-xs text-green-500">↑ 3.2% this week</p>
+                </CardContent>
+             </Card>
+          </div>
+
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Your Classes</h2>
+              <Button variant="link" className="text-primary">View All</Button>
+            </div>
+
+            {loading ? (
+              <div className="flex h-32 items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : classes.length === 0 ? (
+              <Card className="border-dashed flex flex-col items-center justify-center py-12 text-center">
+                <BookOpen className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+                <h3 className="font-semibold text-lg">No classes created yet</h3>
+                <p className="text-muted-foreground mb-6">Create your first class to start tracking attendance.</p>
+                <Button onClick={() => setIsModalOpen(true)} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" /> Create First Class
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {classes.map((c) => (
+                  <Card key={c.id} className="cursor-pointer transition-all hover:ring-2 hover:ring-primary/20" onClick={() => navigate(`/class/${c.id}`)}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                          <BookOpen size={20} />
+                        </div>
+                        <span className="text-xs font-mono font-medium px-2 py-1 bg-muted rounded uppercase">{c.code}</span>
+                      </div>
+                      <CardTitle className="mt-4">{c.name}</CardTitle>
+                      <CardDescription className="line-clamp-2">{c.description}</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="border-t pt-4 text-xs text-muted-foreground flex justify-between">
+                      <span className="flex items-center gap-1"><Users size={14} /> 24 Students</span>
+                      <span className="flex items-center gap-1"><Calendar size={14} /> MWF 10:00 AM</span>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </main>
+
+      <CreateClassModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onCreated={fetchClasses} 
+        instructorId={profile.id}
+      />
     </div>
   );
-}
+};
+
+export default InstructorDashboard;
