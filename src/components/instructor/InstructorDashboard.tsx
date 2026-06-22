@@ -29,7 +29,7 @@ const InstructorDashboard = ({ profile }: InstructorDashboardProps) => {
       const { data, error } = await supabase
         .from('classes')
         .select('*')
-        .eq('instructor_id', profile.id)
+        .eq('clerk_user_id', profile.clerk_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -173,7 +173,7 @@ const InstructorDashboard = ({ profile }: InstructorDashboardProps) => {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onCreated={fetchClasses} 
-        instructorId={profile.id}
+        instructorId={profile.clerk_id}
       />
     </div>
   );
