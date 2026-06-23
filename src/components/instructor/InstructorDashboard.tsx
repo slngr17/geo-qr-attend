@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Profile, Class } from '../../types';
-import { supabase } from '../../lib/supabase';
+import { createAuthenticatedSupabaseClient } from '../../lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Plus, BookOpen, Users, Settings, LogOut, LayoutDashboard, Calendar, FileText, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { UserButton } from '@clerk/clerk-react';
+import { UserButton, useSession } from '@clerk/clerk-react';
 import CreateClassModal from './CreateClassModal';
 import { toast } from 'sonner';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -19,6 +19,7 @@ const InstructorDashboard = ({ profile }: InstructorDashboardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { session } = useSession();
 
   useEffect(() => {
     fetchClasses();
@@ -26,6 +27,9 @@ const InstructorDashboard = ({ profile }: InstructorDashboardProps) => {
 
   const fetchClasses = async () => {
     try {
+      const supabase = createAuthenticatedSupabaseClient(
+        async () => (await session?.getToken()) ?? null
+      );
       const { data, error } = await supabase
         .from('classes')
         .select('*')
