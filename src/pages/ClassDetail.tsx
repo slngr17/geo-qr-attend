@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { Class, Session, Geofence, AttendanceRecord } from '../types';
+import { createAuthenticatedSupabaseClient } from '../lib/supabaseClient';
+import { useSession } from '@clerk/clerk-react';
+import { Class, Geofence } from '../types';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { 
-  ArrowLeft, 
-  Users, 
-  MapPin, 
-  QrCode, 
-  History, 
-  Plus, 
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  ArrowLeft,
+  Users,
+  MapPin,
+  QrCode,
+  History,
+  Plus,
   Clock,
   MoreVertical,
   Calendar as CalendarIcon,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import QRGenerator from '../components/instructor/QRGenerator';
+import GeofenceModal from '../components/instructor/GeofenceModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,12 +29,18 @@ import {
 
 const ClassDetail = () => {
   const { classId } = useParams<{ classId: string }>();
+  const { session } = useSession();
   const [course, setCourse] = useState<Class | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
   const [geofence, setGeofence] = useState<Geofence | null>(null);
   const [loading, setLoading] = useState(true);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  const getSupabase = () =>
+    createAuthenticatedSupabaseClient(
+      async () => (await session?.getToken()) ?? null
+    );
 
   useEffect(() => {
     if (classId) fetchData();
@@ -40,45 +48,19 @@ const ClassDetail = () => {
 
   const fetchData = async () => {
     try {
-      const [classRes, sessionsRes, geofenceRes] = await Promise.all([
+      const supabase = getSupabase();
+      const [classRes, geofenceRes] = await Promise.all([
         supabase.from('classes').select('*').eq('id', classId).single(),
-        supabase.from('sessions').select('*').eq('class_id', classId).order('start_time', { ascending: false }),
-        supabase.from('geofences').select('*').eq('class_id', classId).single()
+        supabase.from('geofences').select('*').eq('class_id', classId).maybeSingle(),
       ]);
 
       if (classRes.error) throw classRes.error;
       setCourse(classRes.data);
-      setSessions(sessionsRes.data || []);
-      setGeofence(geofenceRes.data);
+      setGeofence(geofenceRes.data ?? null);
     } catch (err: any) {
       toast.error('Failed to load class details');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const startSession = async () => {
-    if (!classId) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .insert({
-          class_id: classId,
-          start_time: new Date().toISOString(),
-          end_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour session
-          qr_code_token: Math.random().toString(36).substring(7)
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setSessions([data, ...sessions]);
-      toast.success('Session started! Share the QR code.');
-      setIsQRModalOpen(true);
-    } catch (err: any) {
-      toast.error('Failed to start session');
     }
   };
 
@@ -99,19 +81,25 @@ const ClassDetail = () => {
             </div>
           </div>
           <div className="flex gap-2">
-             <Button variant="outline" size="sm" className="hidden sm:flex">
-               <MapPin className="mr-2 h-4 w-4" /> Manage Geofence
-             </Button>
-             <Button size="sm" onClick={startSession}>
-               <QrCode className="mr-2 h-4 w-4" /> Start Session
-             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+              onClick={() => setIsGeofenceModalOpen(true)}
+            >
+              <MapPin className="mr-2 h-4 w-4" />
+              {geofence ? 'Update Geofence' : 'Set Geofence'}
+            </Button>
+            <Button size="sm" onClick={() => setIsQRModalOpen(true)}>
+              <QrCode className="mr-2 h-4 w-4" /> Start Session
+            </Button>
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Left Column: Stats & Geofence */}
+          {/* Left Column: Info & Geofence */}
           <div className="md:col-span-1 space-y-6">
             <Card>
               <CardHeader>
@@ -119,13 +107,14 @@ const ClassDetail = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground flex items-center gap-2"><Users size={16} /> Students</span>
-                  <span className="font-semibold">32 Enrolled</span>
+                  <span className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Users size={16} /> Code
+                  </span>
+                  <span className="font-mono font-semibold uppercase">{course.code}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground flex items-center gap-2"><History size={16} /> Avg. Presence</span>
-                  <span className="font-semibold text-green-600">91.4%</span>
-                </div>
+                {course.description && (
+                  <p className="text-sm text-muted-foreground">{course.description}</p>
+                )}
               </CardContent>
             </Card>
 
@@ -140,85 +129,64 @@ const ClassDetail = () => {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">{geofence.name}</p>
                     <p className="text-xs text-muted-foreground">Radius: {geofence.radius}m</p>
-                    <div className="mt-4 h-32 rounded bg-muted flex items-center justify-center border text-xs text-muted-foreground italic">
-                      [Interactive Map Placeholder]
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      📍 {geofence.latitude.toFixed(5)}, {geofence.longitude.toFixed(5)}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => setIsGeofenceModalOpen(true)}
+                    >
+                      Update Location
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm text-amber-800 dark:text-amber-200">No geofence set. Students can scan from anywhere!</p>
-                    <Button variant="outline" size="sm" className="w-full">Set Location</Button>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      No geofence set. Students can check in from anywhere!
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => setIsGeofenceModalOpen(true)}
+                    >
+                      Set Location
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Column: Sessions */}
+          {/* Right Column: Sessions placeholder */}
           <div className="md:col-span-2 space-y-6">
-             <div className="flex items-center justify-between">
-               <h2 className="text-2xl font-bold flex items-center gap-2">
-                 <CalendarIcon className="h-6 w-6" /> Recent Sessions
-               </h2>
-               <Button variant="ghost" size="sm">View All</Button>
-             </div>
-
-             {sessions.length === 0 ? (
-               <Card className="border-dashed py-12 text-center text-muted-foreground">
-                 No sessions yet. Click "Start Session" to begin.
-               </Card>
-             ) : (
-               <div className="space-y-4">
-                 {sessions.map((session) => (
-                   <Card key={session.id} className="overflow-hidden">
-                     <div className="flex items-center p-4">
-                       <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center mr-4">
-                         <Clock className="text-muted-foreground" />
-                       </div>
-                       <div className="flex-1">
-                         <h4 className="font-bold">{new Date(session.start_time).toLocaleDateString()}</h4>
-                         <p className="text-xs text-muted-foreground">
-                           {new Date(session.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
-                           {new Date(session.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                         </p>
-                       </div>
-                       <div className="flex items-center gap-3">
-                         <div className="text-right hidden sm:block">
-                           <p className="font-bold text-sm">28 / 32</p>
-                           <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Present</p>
-                         </div>
-                         <Button variant="outline" size="icon" onClick={() => {
-                           setIsQRModalOpen(true);
-                           // In real app, set current session for generator
-                         }}>
-                           <QrCode size={16} />
-                         </Button>
-                         <DropdownMenu>
-                           <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="icon"><MoreVertical size={16} /></Button>
-                           </DropdownMenuTrigger>
-                           <DropdownMenuContent align="end">
-                             <DropdownMenuItem>View Report</DropdownMenuItem>
-                             <DropdownMenuItem>Mark Attendance Manually</DropdownMenuItem>
-                             <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                           </DropdownMenuContent>
-                         </DropdownMenu>
-                       </div>
-                     </div>
-                   </Card>
-                 ))}
-               </div>
-             )}
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <CalendarIcon className="h-6 w-6" /> Sessions
+              </h2>
+            </div>
+            <Card className="border-dashed py-12 text-center text-muted-foreground">
+              Click "Start Session" to generate a QR code for attendance.
+            </Card>
           </div>
         </div>
       </main>
 
-      {/* QR Code Overlay (Simulation) */}
-      {isQRModalOpen && sessions[0] && (
-        <QRGenerator 
-          isOpen={isQRModalOpen} 
-          onClose={() => setIsQRModalOpen(false)} 
-          session={sessions[0]} 
+      <GeofenceModal
+        isOpen={isGeofenceModalOpen}
+        onClose={() => setIsGeofenceModalOpen(false)}
+        classId={classId!}
+        existing={geofence}
+        onSaved={(saved) => setGeofence(saved)}
+      />
+
+      {isQRModalOpen && (
+        <QRGenerator
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          session={{ id: 'preview', class_id: classId!, start_time: new Date().toISOString(), end_time: '', qr_code_token: 'preview', created_at: '' }}
           className={course}
         />
       )}
