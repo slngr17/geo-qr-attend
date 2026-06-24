@@ -6,8 +6,8 @@ const SignInCallback = () => {
       <div className="text-center">
         <p className="text-xl">Completing your sign in...</p>
         <AuthenticateWithRedirectCallback
-          signInFallbackRedirectUrl="/onboarding"
-          signUpFallbackRedirectUrl="/onboarding"
+          signInFallbackRedirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/dashboard"
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
         />
