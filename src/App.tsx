@@ -11,6 +11,7 @@ import {
   SignedOut,
   UserButton,
   useUser,
+  useSession,
   SignIn,
   SignUp
 } from '@clerk/clerk-react';
@@ -22,7 +23,7 @@ import ClassDetail from './pages/ClassDetail';
 import AttendanceScan from './pages/AttendanceScan';
 import Onboarding from './components/Onboarding';
 import SignInCallback from './pages/SignInCallback';
-import { supabase } from './lib/supabase';
+import { createAuthenticatedSupabaseClient } from './lib/supabaseClient';
 import { Profile, UserRole } from './types';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
@@ -46,38 +47,39 @@ function MissingClerkKey() {
   );
 }
 
-function ProtectedRoute({ children, role }: { children: React.ReactNode, role?: UserRole }) {
+// requiresNoProfile: if true, redirect to /dashboard when profile already exists (used for /onboarding)
+function ProtectedRoute({ children, role, requiresNoProfile }: { children: React.ReactNode, role?: UserRole, requiresNoProfile?: boolean }) {
   const { isLoaded, isSignedIn, user } = useUser();
+  const { session } = useSession();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profileChecked, setProfileChecked] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
-      if (isLoaded && isSignedIn && user) {
+      if (isLoaded && isSignedIn && user && session) {
         try {
-          const { data, error } = await supabase
+          const supabase = createAuthenticatedSupabaseClient(
+            async () => (await session.getToken()) ?? null
+          );
+          const { data } = await supabase
             .from('profiles')
             .select('*')
             .eq('clerk_id', user.id)
-            .single();
-          if (error || !data) {
-            setLoading(false);
-            return;
-          }
-          setProfile(data);
+            .maybeSingle();
+          setProfile(data ?? null);
         } catch (err) {
           console.error('Error fetching profile:', err);
         } finally {
-          setLoading(false);
+          setProfileChecked(true);
         }
       } else if (isLoaded && !isSignedIn) {
-        setLoading(false);
+        setProfileChecked(true);
       }
     }
     fetchProfile();
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, session]);
 
-  if (!isLoaded || loading) {
+  if (!isLoaded || !profileChecked) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -89,6 +91,17 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode, role?: 
     return <Navigate to="/sign-in" replace />;
   }
 
+  // On /onboarding: if profile already exists, skip to dashboard
+  if (requiresNoProfile && profile?.role) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // On protected pages: if no profile yet, send to onboarding
+  if (!requiresNoProfile && !profile?.role) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Role-based access control
   if (role && profile && profile.role !== role) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -115,8 +128,8 @@ function App() {
                 <SignIn
                   routing="path"
                   path="/sign-in"
-                  afterSignInUrl="/onboarding"
-                  afterSignUpUrl="/onboarding"
+                  afterSignInUrl="/dashboard"
+                  afterSignUpUrl="/dashboard"
                 />
               </div>
             } />
@@ -126,8 +139,8 @@ function App() {
                 <SignUp
                   routing="path"
                   path="/sign-up"
-                  afterSignInUrl="/onboarding"
-                  afterSignUpUrl="/onboarding"
+                  afterSignInUrl="/dashboard"
+                  afterSignUpUrl="/dashboard"
                 />
               </div>
             } />
@@ -136,9 +149,9 @@ function App() {
             <Route path="/sign-in/sso-callback" element={<SignInCallback />} />
             <Route path="/sign-up/sso-callback" element={<SignInCallback />} />
 
-            {/* Onboarding */}
+            {/* Onboarding — only for users who haven't picked a role yet */}
             <Route path="/onboarding" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiresNoProfile>
                 <Onboarding onComplete={() => window.location.href = '/dashboard'} />
               </ProtectedRoute>
             } />
