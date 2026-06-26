@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
-const ADMIN_PASSWORD = 'your-secret-password-here';
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 
 const AdminGate = () => {
   const [password, setPassword] = useState('');
@@ -15,12 +15,14 @@ const AdminGate = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
+    if (!ADMIN_PASSWORD) {
+      toast.error('Admin password not configured in environment variables.');
+      return;
+    }
     if (password === ADMIN_PASSWORD) {
-      // Store a flag in sessionStorage — gone when browser tab closes
       sessionStorage.setItem('admin_unlocked', 'true');
       toast.success('Access granted');
-      navigate('/sign-up'); // or /sign-in if already registered
+      navigate('/admin/dashboard');
     } else {
       toast.error('Incorrect password');
       setPassword('');
@@ -41,7 +43,7 @@ const AdminGate = () => {
             <div className="relative">
               <Input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Enter access password"
+                placeholder="Enter admin password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
@@ -54,9 +56,7 @@ const AdminGate = () => {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <Button type="submit" className="w-full">
-              Unlock
-            </Button>
+            <Button type="submit" className="w-full">Unlock</Button>
           </form>
         </CardContent>
       </Card>
