@@ -23,6 +23,8 @@ import ClassDetail from './pages/ClassDetail';
 import AttendanceScan from './pages/AttendanceScan';
 import Onboarding from './components/Onboarding';
 import SignInCallback from './pages/SignInCallback';
+import AdminGate from './pages/AdminGate';
+import AdminDashboard from './pages/AdminDashboard';
 import { createAuthenticatedSupabaseClient } from './lib/supabaseClient';
 import { Profile, UserRole } from './types';
 import { Loader2, AlertTriangle } from 'lucide-react';
@@ -177,6 +179,14 @@ function App() {
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
+
+            {/* Admin — hidden routes, no links anywhere */}
+            <Route path="/admin" element={<AdminGate />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+            {/* Hidden Admin Routes — no links anywhere, access by URL only */}
+            <Route path="/admin" element={<AdminGate />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
 
           <Toaster position="top-center" richColors />
