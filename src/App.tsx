@@ -24,7 +24,7 @@ import AttendanceScan from './pages/AttendanceScan';
 import Onboarding from './components/Onboarding';
 import SignInCallback from './pages/SignInCallback';
 import AdminGate from './pages/AdminGate';
-import AdminDashboard from './pages/AdminDashboard';
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 import { createAuthenticatedSupabaseClient } from './lib/supabaseClient';
 import { Profile, UserRole } from './types';
 import { Loader2, AlertTriangle } from 'lucide-react';
@@ -182,7 +182,11 @@ function App() {
 
             {/* Admin — hidden routes, no links anywhere */}
             <Route path="/admin" element={<AdminGate />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={
+              <React.Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+                <AdminDashboard />
+              </React.Suspense>
+            } />
 
             {/* Hidden Admin Routes — no links anywhere, access by URL only */}
             <Route path="/admin" element={<AdminGate />} />
