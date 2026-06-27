@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabaseAdmin } from '../lib/supabaseAdmin';
+import { getSupabaseAdmin } from '../lib/supabaseAdmin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -88,9 +88,9 @@ const AdminDashboard = () => {
     setLoading(true);
     try {
       const [profilesRes, classesRes, attendanceRes] = await Promise.all([
-        supabaseAdmin.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabaseAdmin.from('classes').select('*').order('created_at', { ascending: false }),
-        supabaseAdmin.from('attendance').select('*').order('created_at', { ascending: false }),
+        getSupabaseAdmin().from('profiles').select('*').order('created_at', { ascending: false }),
+        getSupabaseAdmin().from('classes').select('*').order('created_at', { ascending: false }),
+        getSupabaseAdmin().from('attendance').select('*').order('created_at', { ascending: false }),
       ]);
       if (profilesRes.error) throw profilesRes.error;
       if (classesRes.error) throw classesRes.error;
@@ -135,7 +135,7 @@ const AdminDashboard = () => {
 
   const saveEdit = async (id: string) => {
     try {
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('profiles')
         .update({
           full_name: editForm.full_name,
@@ -156,7 +156,7 @@ const AdminDashboard = () => {
   const deleteUser = async (id: string, name: string) => {
     if (!confirm(`Delete profile for "${name}"? This forces them to re-onboard on next login.`)) return;
     try {
-      const { error } = await supabaseAdmin.from('profiles').delete().eq('id', id);
+      const { error } = await getSupabaseAdmin().from('profiles').delete().eq('id', id);
       if (error) throw error;
       toast.success(`Profile for "${name}" deleted`);
       fetchAll();
@@ -171,7 +171,7 @@ const AdminDashboard = () => {
       return;
     }
     try {
-      const { error } = await supabaseAdmin.from('profiles').insert({
+      const { error } = await getSupabaseAdmin().from('profiles').insert({
         clerk_id: newUser.clerk_id,
         full_name: newUser.full_name,
         role: newUser.role,
@@ -192,7 +192,7 @@ const AdminDashboard = () => {
   const deleteClass = async (id: string, name: string) => {
     if (!confirm(`Delete class "${name}"? All associated attendance data will also be deleted.`)) return;
     try {
-      const { error } = await supabaseAdmin.from('classes').delete().eq('id', id);
+      const { error } = await getSupabaseAdmin().from('classes').delete().eq('id', id);
       if (error) throw error;
       toast.success(`Class "${name}" deleted`);
       fetchAll();
@@ -205,7 +205,7 @@ const AdminDashboard = () => {
   const deleteAttendance = async (id: string) => {
     if (!confirm('Delete this attendance record?')) return;
     try {
-      const { error } = await supabaseAdmin.from('attendance').delete().eq('id', id);
+      const { error } = await getSupabaseAdmin().from('attendance').delete().eq('id', id);
       if (error) throw error;
       toast.success('Record deleted');
       fetchAll();
