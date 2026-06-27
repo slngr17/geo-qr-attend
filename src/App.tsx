@@ -52,34 +52,43 @@ function MissingClerkKey() {
 // requiresNoProfile: if true, redirect to /dashboard when profile already exists (used for /onboarding)
 function ProtectedRoute({ children, role, requiresNoProfile }: { children: React.ReactNode, role?: UserRole, requiresNoProfile?: boolean }) {
   const { isLoaded, isSignedIn, user } = useUser();
-  const { session } = useSession();
+  const { session, isLoaded: sessionLoaded } = useSession();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileChecked, setProfileChecked] = useState(false);
 
   useEffect(() => {
+    // Wait until BOTH user and session are fully loaded before doing anything
+    if (!isLoaded || !sessionLoaded) return;
+
     async function fetchProfile() {
-      if (isLoaded && isSignedIn && user && session) {
+      if (isSignedIn && user && session) {
         try {
           const supabase = createAuthenticatedSupabaseClient(
             async () => (await session.getToken()) ?? null
           );
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('clerk_id', user.id)
             .maybeSingle();
+          if (error) {
+            console.error('Error fetching profile:', error);
+          }
           setProfile(data ?? null);
         } catch (err) {
           console.error('Error fetching profile:', err);
+          setProfile(null);
         } finally {
           setProfileChecked(true);
         }
-      } else if (isLoaded && !isSignedIn) {
+      } else if (!isSignedIn) {
         setProfileChecked(true);
       }
+      // if isSignedIn but session is null, do nothing — wait for next effect run
     }
+
     fetchProfile();
-  }, [isLoaded, isSignedIn, user, session]);
+  }, [isLoaded, sessionLoaded, isSignedIn, user, session]);
 
   if (!isLoaded || !profileChecked) {
     return (
