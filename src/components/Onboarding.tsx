@@ -36,14 +36,45 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
       return;
     }
 
-    // Role-specific validation
-    if (role === 'student' && !matricNumber) {
-      toast.error('Matriculation number is required for students');
-      return;
+    // ── Instructor: school email must end with .edu ──────────────
+    if (role === 'instructor') {
+      if (!schoolEmail) {
+        toast.error('School email is required for instructors');
+        return;
+      }
+      if (!schoolEmail.toLowerCase().endsWith('.edu')) {
+        toast.error('Invalid credentials — instructor email must end with .edu');
+        return;
+      }
     }
-    if (role === 'instructor' && !schoolEmail) {
-      toast.error('School email is required for instructors');
-      return;
+
+    // ── Student: matric must match FUO/XX/XXX/XXXXX (all caps) ──
+    if (role === 'student') {
+      if (!matricNumber) {
+        toast.error('Matriculation number is required for students');
+        return;
+      }
+
+      const matricPattern = /^FUO\/[A-Z0-9]{2}\/[A-Z]{3}\/[0-9]{5}$/;
+      if (!matricPattern.test(matricNumber)) {
+        toast.error('Invalid credentials — matric number must follow the format FUO/YY/DEP/NNNNN (e.g. FUO/19/CSC/12345)');
+        return;
+      }
+
+      // Check uniqueness
+      const supabaseCheck = createAuthenticatedSupabaseClient(
+        async () => (await session?.getToken()) ?? null
+      );
+      const { data: existing } = await supabaseCheck
+        .from('profiles')
+        .select('id')
+        .eq('matric_number', matricNumber)
+        .maybeSingle();
+
+      if (existing) {
+        toast.error('Matric number already exists — please check your entry or contact admin');
+        return;
+      }
     }
 
     setLoading(true);
@@ -136,11 +167,14 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
                     <Label htmlFor="matric">Matriculation Number</Label>
                     <Input
                       id="matric"
-                      placeholder="U20123456"
+                      placeholder="FUO/19/CSC/12345"
                       value={matricNumber}
-                      onChange={(e) => setMatricNumber(e.target.value)}
+                      onChange={(e) => setMatricNumber(e.target.value.toUpperCase())}
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Format: FUO/YY/DEP/NNNNN — e.g. FUO/19/CSC/12345
+                    </p>
                   </div>
                 )}
 
