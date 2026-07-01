@@ -15,20 +15,27 @@ const AttendanceScan = () => {
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  // onScanSuccess is bound to the scanner once, on mount, so it closes over
+  // whatever `location` state was at that instant (always null). Reading
+  // location via a ref instead means the callback always sees the latest value.
+  const locationRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     // Request location immediately
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
+          const loc = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
+          };
+          locationRef.current = loc;
+          setLocation(loc);
         },
         (error) => {
           toast.error("Location access denied. Attendance cannot be verified without GPS.");
-        }
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     }
 
@@ -68,8 +75,8 @@ const AttendanceScan = () => {
       // In a real app, you'd call a Supabase Edge Function here
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing
 
-      if (!location) {
-         throw new Error("GPS location required to verify attendance.");
+      if (!locationRef.current) {
+         throw new Error("GPS location required to verify attendance. Please wait a moment for GPS to lock and try again.");
       }
 
       // Record attendance
