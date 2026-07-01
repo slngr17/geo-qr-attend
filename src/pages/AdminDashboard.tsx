@@ -520,7 +520,7 @@ const AdminDashboard = () => {
           <header className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold capitalize">{activeView}</h1>
-              <p className="text-muted-foreground text-sm">AttendX System Administration</p>
+              <p className="text-muted-foreground text-sm">SmartAttendX System Administration</p>
             </div>
             <ThemeToggle />
           </header>
