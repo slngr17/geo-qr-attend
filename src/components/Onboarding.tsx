@@ -101,7 +101,7 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
 
       if (error) throw error;
 
-      toast.success(`Welcome to AttendX, ${fullName}!`);
+      toast.success(`Welcome to SmartAttendX, ${fullName}!`);
       onComplete(data);
     } catch (err: any) {
       console.error(err);
@@ -118,7 +118,7 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
           <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
           <CardDescription>
             {step === 'role' 
-              ? "Select your role to get started with AttendX" 
+              ? "Select your role to get started with SmartAttendX" 
               : `Enter your ${role === 'student' ? 'matriculation details' : 'school email'}`}
           </CardDescription>
         </CardHeader>
