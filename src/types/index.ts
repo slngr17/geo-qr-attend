@@ -6,8 +6,9 @@ export interface Profile {
   full_name: string;
   role: UserRole;
   avatar_url?: string;
+  matric_number?: string;
+  school_email?: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Class {
@@ -15,7 +16,7 @@ export interface Class {
   name: string;
   code: string;
   description?: string;
-  instructor_id: string;
+  clerk_user_id: string;
   created_at: string;
 }
 
