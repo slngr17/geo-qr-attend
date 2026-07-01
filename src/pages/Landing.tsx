@@ -24,7 +24,7 @@ const Landing = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <QrCode size={24} />
             </div>
-            <span className="text-xl font-bold tracking-tight">AttendX</span>
+            <span className="text-xl font-bold tracking-tight">SmartAttendX</span>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
@@ -132,7 +132,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t py-12 bg-background">
         <div className="mx-auto max-w-7xl px-4 text-center text-muted-foreground sm:px-6 lg:px-8">
-          <p>© 2025 AttendX Smart Systems. All rights reserved.</p>
+          <p>© 2025 SmartAttendX. All rights reserved.</p>
         </div>
       </footer>
     </div>
