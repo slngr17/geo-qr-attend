@@ -173,7 +173,7 @@ const AttendanceScan = () => {
       </main>
 
       <footer className="p-8 text-center">
-        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Powered by AttendX Secure Geofencing</p>
+        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Powered by SmartAttendX Secure Geofencing</p>
       </footer>
     </div>
   );
