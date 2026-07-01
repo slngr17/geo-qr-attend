@@ -75,7 +75,7 @@ const StudentDashboard = ({ profile }: StudentDashboardProps) => {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
             <QrCode size={18} />
           </div>
-          <span className="font-bold">AttendX</span>
+          <span className="font-bold">SmartAttendX</span>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
