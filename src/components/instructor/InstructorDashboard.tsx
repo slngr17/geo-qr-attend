@@ -301,7 +301,7 @@ const InstructorDashboard = ({ profile }: InstructorDashboardProps) => {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
             <LayoutDashboard size={18} />
           </div>
-          <span className="font-bold text-xl">AttendX</span>
+          <span className="font-bold text-xl">SmartAttendX</span>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map(({ label, view, icon }) => (
